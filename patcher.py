@@ -37,7 +37,7 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
 FONT_NAME_RE = re.compile(r'^([^-]*)(?:(-.*))?$')
 NUM_DIGIT_COPIES = 6
 
-def gen_feature(digit_names, underscore_name):
+def gen_feature(digit_names, underscore_name, dot_name):
     feature = """
 languagesystem DFLT dflt;
 languagesystem latn dflt;
@@ -46,31 +46,24 @@ languagesystem grek dflt;
 languagesystem kana dflt;
 @digits=[{digit_names}];
 {nds}
-{allnds}
-{allnds_nxt}
 
 feature calt {{
-    sub @digits by @nd0;
-    reversesub @nd0' @nd0 by @nd1;
-    reversesub @nd0' @nd1 by @nd2;
-    reversesub @nd0' @nd2 by @nd3;
-    reversesub @nd0' @nd3 by @nd4;
-    reversesub @nd0' @nd4 by @nd5;
+    sub {dot_name} @digits' by @nd0;
+    sub @nd0 @digits' by @nd0;
+
+    reversesub @digits' @digits by @nd1;
+    reversesub @digits' @nd1 by @nd2;
+    reversesub @digits' @nd2 by @nd3;
+    reversesub @digits' @nd3 by @nd4;
+    reversesub @digits' @nd4 by @nd5;
 }} calt;
 """[1:]
 
     nds = [' '.join(['nd{}.{}'.format(i,j) for j in range(10)]) for i in range(NUM_DIGIT_COPIES)]
     nds = ['@nd{}=[{}];'.format(i,nds[i]) for i in range(NUM_DIGIT_COPIES)]
     nds = "\n".join(nds)
-
-    allnds = ['nd{}.{}'.format(i,j) for i in range(NUM_DIGIT_COPIES) for j in range(10)]
-    allnds = "@allnds=[{}];".format(' '.join(allnds))
-
-    allnds_nxt = ['nd{}.{}'.format((i+1)%NUM_DIGIT_COPIES,j) for i in range(NUM_DIGIT_COPIES) for j in range(10)]
-    allnds_nxt = "@allnds_nxt=[{}];".format(' '.join(allnds_nxt))
-
     feature = feature.format(digit_names=' '.join(digit_names),
-        nds=nds, allnds=allnds, allnds_nxt=allnds_nxt, underscore_name=underscore_name)
+        nds=nds, underscore_name=underscore_name, dot_name=dot_name)
     with open('mods.fea', 'w') as f:
         f.write(feature)
 
@@ -120,6 +113,7 @@ def patch_one_font(font, rename_font=True):
     digit_names = [font[code].glyphname for code in range(ord('0'),ord('9')+1)]
     test_names = [font[code].glyphname for code in range(ord('A'),ord('J')+1)]
     underscore_name = font[ord('_')].glyphname
+    dot_name = font[ord('.')].glyphname
     print(digit_names)
 
     underscore_layer = font[underscore_name].layers[1]
@@ -145,7 +139,7 @@ def patch_one_font(font, rename_font=True):
             add_underscore = copy_i >= 3
             make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore)
 
-    gen_feature(digit_names, underscore_name)
+    gen_feature(digit_names, underscore_name, dot_name)
     # font.mergeFeature('mods.fea')
 
     font.generate('out/tmp.ttf')

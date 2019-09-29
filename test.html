@@ -22,38 +22,57 @@
       .small {
         font-size: 8pt;
       }
+
+      .nice-table td {
+        padding-left: 5px;
+      }
+
+      pre {
+        margin: 10px;
+      }
     </style>
   </head>
   <body>
     <pre class="font-test">
-      the quick brown fox jumps over the lazy dog
-      this <= that && why == zeven === five >>= lol
-      hamburgefont
-      1
-      12
-      123
-      1234
-      12345
-      123456
-      1234567
-      12345678
-      123456789
-      1234567890
+the quick brown fox jumps over the lazy dog
+this <= that && why == zeven === five >>= lol
+hamburgefont
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+1234567890
 
-      123456 12345678 12345678
+123456 12345678 12345678
 
-      aoeu1234125otnuehnth
-      12543,1243152,12543523
-    </pre>
+aoeu1234125otnuehnth
+12543,1243152,12543523</pre>
     <pre class="font-test big">
-      the quick brown fox jumps over the lazy dog
-      1234567890
-      123456 123423,124356
-    </pre>
+the quick brown fox jumps over the lazy dog
+1234567890
+123456 123423,124356.000000</pre>
+    <pre class="font-test">
+the quick brown fox jumps over the lazy dog
+1234567890
+123456 123423,124356.000000</pre>
     <pre class="font-test small">
-      the quick brown fox jumps over the lazy dog
-      1234567890
-      123456 123423,124356
-    </pre>
+the quick brown fox jumps over the lazy dog
+1234567890
+123456 123423,124356.000000</pre>
+    <table class="font-test nice-table">
+      <tr><th>Benchmark</th><th>Nanoseconds</th></tr>
+      <tr><td>blah_foo_bar</td><td align="right">17892384923</td></tr>
+      <tr><td>blah_baz1</td><td align="right">16892323</td></tr>
+      <tr><td>blah_baz2</td><td align="right">14772243</td></tr>
+      <tr><td>blah_baz3</td><td align="right">16423444</td></tr>
+      <tr><td>blah_baz4</td><td align="right">16978123</td></tr>
+      <tr><td>blah_qux</td><td align="right">17923</td></tr>
+      <tr><td>blah_lorem</td><td align="right">234923</td></tr>
+    </table>
   </body>
 </html>
