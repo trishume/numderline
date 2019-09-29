@@ -11,8 +11,11 @@ from itertools import chain
 try:
     import fontforge
     import psMat
+    # from fontTools.misc.py23 import *
+    from fontTools.ttLib import TTFont
+    from fontTools.feaLib.builder import addOpenTypeFeatures, Builder
 except ImportError:
-    sys.stderr.write('The required FontForge modules could not be loaded.\n\n')
+    sys.stderr.write('The required FontForge and fonttools modules could not be loaded.\n\n')
     sys.stderr.write('You need FontForge with Python bindings for this script to work.\n')
     sys.exit(1)
 
@@ -34,7 +37,7 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
 FONT_NAME_RE = re.compile(r'^([^-]*)(?:(-.*))?$')
 NUM_DIGIT_COPIES = 6
 
-def gen_feature(digit_names):
+def gen_feature(digit_names, underscore_name):
     feature = """
 languagesystem DFLT dflt;
 languagesystem latn dflt;
@@ -47,7 +50,12 @@ languagesystem kana dflt;
 {allnds_nxt}
 
 feature calt {{
-  sub @digits by @nd0;
+    sub @digits by @nd0;
+    reversesub @nd0' @nd0 by @nd1;
+    reversesub @nd0' @nd1 by @nd2;
+    reversesub @nd0' @nd2 by @nd3;
+    reversesub @nd0' @nd3 by @nd4;
+    reversesub @nd0' @nd4 by @nd5;
 }} calt;
 """[1:]
 
@@ -61,7 +69,8 @@ feature calt {{
     allnds_nxt = ['nd{}.{}'.format((i+1)%NUM_DIGIT_COPIES,j) for i in range(NUM_DIGIT_COPIES) for j in range(10)]
     allnds_nxt = "@allnds_nxt=[{}];".format(' '.join(allnds_nxt))
 
-    feature = feature.format(digit_names=' '.join(digit_names), nds=nds, allnds=allnds, allnds_nxt=allnds_nxt)
+    feature = feature.format(digit_names=' '.join(digit_names),
+        nds=nds, allnds=allnds, allnds_nxt=allnds_nxt, underscore_name=underscore_name)
     with open('mods.fea', 'w') as f:
         f.write(feature)
 
@@ -110,35 +119,47 @@ def patch_one_font(font, rename_font=True):
 
     digit_names = [font[code].glyphname for code in range(ord('0'),ord('9')+1)]
     test_names = [font[code].glyphname for code in range(ord('A'),ord('J')+1)]
+    underscore_name = font[ord('_')].glyphname
     print(digit_names)
+
+    underscore_layer = font[underscore_name].layers[1]
 
     # 0xE900 starts an area spanning until 0xF000 that as far as I can tell nothing
     # popular uses. I checked the Apple glyph browser and Nerd Font.
     # Uses an array because of python closure capture semantics
     encoding_alloc = [0xE900]
-    def make_copy(loc, to_name):
+    def make_copy(loc, to_name, add_underscore):
         encoding = encoding_alloc[0]
         font.selection.select(loc)
         font.copy()
         font.selection.select(encoding)
         font.paste()
-        font[encoding].glyphname = to_name
+        glyph = font[encoding]
+        glyph.glyphname = to_name
+        if add_underscore:
+            glyph.layers[1] += underscore_layer
         encoding_alloc[0] += 1
 
     for copy_i in range(0,NUM_DIGIT_COPIES):
         for digit_i in range(0,10):
-            make_copy(test_names[copy_i], 'nd{}.{}'.format(copy_i,digit_i))
+            add_underscore = copy_i >= 3
+            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore)
 
-    gen_feature(digit_names)
-    font.mergeFeature('mods.fea')
+    gen_feature(digit_names, underscore_name)
+    # font.mergeFeature('mods.fea')
+
+    font.generate('out/tmp.ttf')
+    ft_font = TTFont('out/tmp.ttf')
+    addOpenTypeFeatures(ft_font, 'mods.fea', tables=['GSUB'])
+    ft_font.save('out/{0}.ttf'.format(font.fullname))
 
     # Generate patched font
     # extension = os.path.splitext(font.path)[1]
     # if extension.lower() not in ['.ttf', '.otf']:
     #     # Default to OpenType if input is not TrueType/OpenType
     #     extension = '.otf'
-    extension = '.otf'
-    font.generate('out/{0}{1}'.format(font.fullname, extension))
+    # extension = '.otf'
+    # font.generate('out/{0}{1}'.format(font.fullname, extension))
 
 
 def patch_fonts(target_files, rename_font=True):
