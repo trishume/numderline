@@ -39,6 +39,9 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
                         default=False, action='store_true')
     parser.add_argument('--shift-amount', help='amount to shift digits to group them together, try 100', type=int, default=0)
     parser.add_argument('--squish', help='horizontal scale to apply to the digits to maybe make them more readable when shifted', type=float, default=1.0)
+    parser.add_argument('--squish-all',
+                        help='squish all numbers, including decimals and ones less than 4 digits',
+                        default=False, action='store_true')
     return parser
 
 
@@ -56,9 +59,11 @@ languagesystem kana dflt;
 {nds}
 
 feature calt {{
-    sub @digits by @nd0;
-    sub {dot_name} @nd0' by @digits;
-    sub @digits @nd0' by @digits;
+    ignore sub {dot_name} @digits';
+    sub @digits @digits' by @digits;
+
+    sub @digits' @digits @digits @digits by @nd0;
+    sub @nd0 @digits' by @nd0;
 
     reversesub @nd0' @nd0 by @nd1;
     reversesub @nd0' @nd1 by @nd2;
@@ -98,7 +103,7 @@ def add_comma_to(glyph, comma_glyph):
     glyph.width += comma_glyph.width
 
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, add_commas):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas):
     font.encoding = 'ISO10646'
 
     mod_name = 'N'
@@ -111,6 +116,8 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, add_
     if squish != 1.0:
         squish_s = '{}'.format(squish)
         mod_name += 'Squish{}'.format(squish_s.replace('.','p'))
+        if squish_all:
+            mod_name += 'All'
 
     # Rename font
     if rename_font:
@@ -162,9 +169,14 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, add_
                 shift = -shift_amount
             elif copy_i % 3 == 2:
                 shift = shift_amount
-            add_underscore = add_underlines and (copy_i >= 3)
+            add_underscore = add_underlines and (copy_i >= 3 and copy_i < 6)
             add_comma = add_commas and (copy_i == 3 or copy_i == 6)
             make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish)
+
+    if squish_all and squish != 1.0:
+        for digit in digit_names:
+            glyph = font[digit]
+            glyph.layers[1] = squish_layer(glyph.layers[1], squish)
 
     gen_feature(digit_names, underscore_name, dot_name)
     # font.mergeFeature('mods.fea')
@@ -195,7 +207,7 @@ def patch_fonts(target_files, *args):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.add_commas)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas)
 
 
 raise SystemExit(main(sys.argv[1:]))
