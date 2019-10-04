@@ -31,11 +31,19 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     parser.add_argument('--no-rename',
                         help='don\'t add " with Numderline" to the font name',
                         default=True, action='store_false', dest='rename_font')
+    parser.add_argument('--no-underline',
+                        help='don\'t add underlines',
+                        default=True, action='store_false', dest='add_underlines')
+    parser.add_argument('--add-commas',
+                        help='add commas',
+                        default=False, action='store_true')
+    parser.add_argument('--shift-amount', help='amount to shift digits to group them together, try 100', type=int, default=0)
+    parser.add_argument('--squish', help='horizontal scale to apply to the digits to maybe make them more readable when shifted', type=float, default=1.0)
     return parser
 
 
 FONT_NAME_RE = re.compile(r'^([^-]*)(?:(-.*))?$')
-NUM_DIGIT_COPIES = 6
+NUM_DIGIT_COPIES = 7
 
 def gen_feature(digit_names, underscore_name, dot_name):
     feature = """
@@ -48,14 +56,17 @@ languagesystem kana dflt;
 {nds}
 
 feature calt {{
-    sub {dot_name} @digits' by @nd0;
-    sub @nd0 @digits' by @nd0;
+    sub @digits by @nd0;
+    sub {dot_name} @nd0' by @digits;
+    sub @digits @nd0' by @digits;
 
-    reversesub @digits' @digits by @nd1;
-    reversesub @digits' @nd1 by @nd2;
-    reversesub @digits' @nd2 by @nd3;
-    reversesub @digits' @nd3 by @nd4;
-    reversesub @digits' @nd4 by @nd5;
+    reversesub @nd0' @nd0 by @nd1;
+    reversesub @nd0' @nd1 by @nd2;
+    reversesub @nd0' @nd2 by @nd3;
+    reversesub @nd0' @nd3 by @nd4;
+    reversesub @nd0' @nd4 by @nd5;
+    reversesub @nd0' @nd5 by @nd6;
+    reversesub @nd0' @nd6 by @nd1;
 }} calt;
 """[1:]
 
@@ -67,48 +78,52 @@ feature calt {{
     with open('mods.fea', 'w') as f:
         f.write(feature)
 
+def shift_layer(layer, shift):
+    layer = layer.dup()
+    mat = psMat.translate(shift, 0)
+    layer.transform(mat)
+    return layer
 
-def patch_one_font(font, rename_font=True):
-    font_em_original = font.em
-    font.em = 2048
+def squish_layer(layer, squish):
+    layer = layer.dup()
+    mat = psMat.scale(squish, 1.0)
+    layer.transform(mat)
+    return layer
+
+def add_comma_to(glyph, comma_glyph):
+    comma_layer = comma_glyph.layers[1].dup()
+    mat = psMat.translate(glyph.width, 0)
+    comma_layer.transform(mat)
+    glyph.layers[1] += comma_layer
+    glyph.width += comma_glyph.width
+
+
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, add_commas):
     font.encoding = 'ISO10646'
+
+    mod_name = 'N'
+    if add_commas:
+        mod_name += 'ommas'
+    if add_underlines:
+        mod_name += 'umderline'
+    if shift_amount != 0:
+        mod_name += 'Shift{}'.format(shift_amount)
+    if squish != 1.0:
+        squish_s = '{}'.format(squish)
+        mod_name += 'Squish{}'.format(squish_s.replace('.','p'))
 
     # Rename font
     if rename_font:
-        font.familyname += ' with Numderline'
-        font.fullname += ' with Numderline'
+        font.familyname += ' with '+mod_name
+        font.fullname += ' with '+mod_name
         fontname, style = FONT_NAME_RE.match(font.fontname).groups()
-        font.fontname = fontname + 'WithNumderline'
+        font.fontname = fontname + 'With' + mod_name
         if style is not None:
             font.fontname += style
         font.appendSFNTName(
             'English (US)', 'Preferred Family', font.familyname)
         font.appendSFNTName(
             'English (US)', 'Compatible Full', font.fullname)
-
-    target_bb = [0, 0, 0, 0]
-    font_width = 0
-
-    # Find the biggest char width and height in the Latin-1 extended range and
-    # the box drawing range This isn't ideal, but it works fairly well - some
-    # fonts may need tuning after patching.
-    for cp in chain(range(0x00, 0x17f), range(0x2500, 0x2600)):
-        try:
-            bbox = font[cp].boundingBox()
-        except TypeError:
-            continue
-        if not font_width:
-            font_width = font[cp].width
-        if bbox[0] < target_bb[0]:
-            target_bb[0] = bbox[0]
-        if bbox[1] < target_bb[1]:
-            target_bb[1] = bbox[1]
-        if bbox[2] > target_bb[2]:
-            target_bb[2] = bbox[2]
-        if bbox[3] > target_bb[3]:
-            target_bb[3] = bbox[3]
-
-    font.em = font_em_original
 
     digit_names = [font[code].glyphname for code in range(ord('0'),ord('9')+1)]
     test_names = [font[code].glyphname for code in range(ord('A'),ord('J')+1)]
@@ -122,7 +137,7 @@ def patch_one_font(font, rename_font=True):
     # popular uses. I checked the Apple glyph browser and Nerd Font.
     # Uses an array because of python closure capture semantics
     encoding_alloc = [0xE900]
-    def make_copy(loc, to_name, add_underscore):
+    def make_copy(loc, to_name, add_underscore, add_comma, shift, squish):
         encoding = encoding_alloc[0]
         font.selection.select(loc)
         font.copy()
@@ -130,14 +145,26 @@ def patch_one_font(font, rename_font=True):
         font.paste()
         glyph = font[encoding]
         glyph.glyphname = to_name
+        if squish != 1.0:
+            glyph.layers[1] = squish_layer(glyph.layers[1], squish)
+        if shift != 0:
+            glyph.layers[1] = shift_layer(glyph.layers[1], shift)
         if add_underscore:
             glyph.layers[1] += underscore_layer
+        if add_comma:
+            add_comma_to(glyph, font[ord(',')])
         encoding_alloc[0] += 1
 
     for copy_i in range(0,NUM_DIGIT_COPIES):
         for digit_i in range(0,10):
-            add_underscore = copy_i >= 3
-            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore)
+            shift = 0
+            if copy_i % 3 == 0:
+                shift = -shift_amount
+            elif copy_i % 3 == 2:
+                shift = shift_amount
+            add_underscore = add_underlines and (copy_i >= 3)
+            add_comma = add_commas and (copy_i == 3 or copy_i == 6)
+            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish)
 
     gen_feature(digit_names, underscore_name, dot_name)
     # font.mergeFeature('mods.fea')
@@ -156,11 +183,11 @@ def patch_one_font(font, rename_font=True):
     # font.generate('out/{0}{1}'.format(font.fullname, extension))
 
 
-def patch_fonts(target_files, rename_font=True):
+def patch_fonts(target_files, *args):
     for target_file in target_files:
         target_font = fontforge.open(target_file.name)
         try:
-            patch_one_font(target_font, rename_font)
+            patch_one_font(target_font, *args)
         finally:
             target_font.close()
     return 0
@@ -168,7 +195,7 @@ def patch_fonts(target_files, rename_font=True):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.add_commas)
 
 
 raise SystemExit(main(sys.argv[1:]))
