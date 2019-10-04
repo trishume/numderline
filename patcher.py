@@ -40,7 +40,10 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     parser.add_argument('--shift-amount', help='amount to shift digits to group them together, try 100', type=int, default=0)
     parser.add_argument('--squish', help='horizontal scale to apply to the digits to maybe make them more readable when shifted', type=float, default=1.0)
     parser.add_argument('--squish-all',
-                        help='squish all numbers, including decimals and ones less than 4 digits',
+                        help='squish all numbers, including decimals and ones less than 4 digits, use with --squish flag',
+                        default=False, action='store_true')
+    parser.add_argument('--spaceless-commas',
+                        help='manipulate commas to not change the spacing, for monospace fonts, use with --add-commas',
                         default=False, action='store_true')
     return parser
 
@@ -95,20 +98,31 @@ def squish_layer(layer, squish):
     layer.transform(mat)
     return layer
 
-def add_comma_to(glyph, comma_glyph):
+def add_comma_to(glyph, comma_glyph, spaceless):
     comma_layer = comma_glyph.layers[1].dup()
-    mat = psMat.translate(glyph.width, 0)
+    x_shift = glyph.width
+    y_shift = 0
+    if spaceless:
+        mat = psMat.scale(0.8, 0.8)
+        comma_layer.transform(mat)
+        x_shift -= comma_glyph.width / 2
+        # y_shift = -200
+    mat = psMat.translate(x_shift, y_shift)
     comma_layer.transform(mat)
     glyph.layers[1] += comma_layer
-    glyph.width += comma_glyph.width
+    if not spaceless:
+        glyph.width += comma_glyph.width
 
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas):
     font.encoding = 'ISO10646'
 
     mod_name = 'N'
     if add_commas:
-        mod_name += 'ommas'
+        if spaceless_commas:
+            mod_name += 'onoCommas'
+        else:
+            mod_name += 'ommas'
     if add_underlines:
         mod_name += 'umderline'
     if shift_amount != 0:
@@ -159,7 +173,7 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
         if add_underscore:
             glyph.layers[1] += underscore_layer
         if add_comma:
-            add_comma_to(glyph, font[ord(',')])
+            add_comma_to(glyph, font[ord(',')], spaceless_commas)
         encoding_alloc[0] += 1
 
     for copy_i in range(0,NUM_DIGIT_COPIES):
@@ -207,7 +221,7 @@ def patch_fonts(target_files, *args):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas)
 
 
 raise SystemExit(main(sys.argv[1:]))
