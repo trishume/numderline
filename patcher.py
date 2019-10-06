@@ -193,20 +193,11 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
             glyph.layers[1] = squish_layer(glyph.layers[1], squish)
 
     gen_feature(digit_names, underscore_name, dot_name)
-    # font.mergeFeature('mods.fea')
 
     font.generate('out/tmp.ttf')
     ft_font = TTFont('out/tmp.ttf')
     addOpenTypeFeatures(ft_font, 'mods.fea', tables=['GSUB'])
     ft_font.save('out/{0}.ttf'.format(font.fullname))
-
-    # Generate patched font
-    # extension = os.path.splitext(font.path)[1]
-    # if extension.lower() not in ['.ttf', '.otf']:
-    #     # Default to OpenType if input is not TrueType/OpenType
-    #     extension = '.otf'
-    # extension = '.otf'
-    # font.generate('out/{0}{1}'.format(font.fullname, extension))
 
 
 def patch_fonts(target_files, *args):
