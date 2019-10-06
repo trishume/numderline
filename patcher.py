@@ -45,6 +45,9 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     parser.add_argument('--spaceless-commas',
                         help='manipulate commas to not change the spacing, for monospace fonts, use with --add-commas',
                         default=False, action='store_true')
+    parser.add_argument('--debug-annotate',
+                        help='annotate glyph copies with debug digits',
+                        default=False, action='store_true')
     return parser
 
 
@@ -113,8 +116,19 @@ def add_comma_to(glyph, comma_glyph, spaceless):
     if not spaceless:
         glyph.width += comma_glyph.width
 
+def annotate_glyph(glyph, extra_glyph):
+    layer = extra_glyph.layers[1].dup()
+    mat = psMat.translate(-(extra_glyph.width/2), 0)
+    layer.transform(mat)
+    mat = psMat.scale(0.3, 0.3)
+    layer.transform(mat)
+    mat = psMat.translate((extra_glyph.width/2), 0)
+    layer.transform(mat)
+    mat = psMat.translate(0, -600)
+    layer.transform(mat)
+    glyph.layers[1] += layer
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate):
     font.encoding = 'ISO10646'
 
     mod_name = 'N'
@@ -132,6 +146,8 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
         mod_name += 'Squish{}'.format(squish_s.replace('.','p'))
         if squish_all:
             mod_name += 'All'
+    if debug_annotate:
+        mod_name += 'Debug'
 
     # Rename font
     if rename_font:
@@ -158,7 +174,7 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
     # popular uses. I checked the Apple glyph browser and Nerd Font.
     # Uses an array because of python closure capture semantics
     encoding_alloc = [0xE900]
-    def make_copy(loc, to_name, add_underscore, add_comma, shift, squish):
+    def make_copy(loc, to_name, add_underscore, add_comma, shift, squish, annotate_with):
         encoding = encoding_alloc[0]
         font.selection.select(loc)
         font.copy()
@@ -174,6 +190,8 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
             glyph.layers[1] += underscore_layer
         if add_comma:
             add_comma_to(glyph, font[ord(',')], spaceless_commas)
+        if annotate_with is not None:
+            annotate_glyph(glyph, annotate_with)
         encoding_alloc[0] += 1
 
     for copy_i in range(0,NUM_DIGIT_COPIES):
@@ -185,7 +203,8 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
                 shift = shift_amount
             add_underscore = add_underlines and (copy_i >= 3 and copy_i < 6)
             add_comma = add_commas and (copy_i == 3 or copy_i == 6)
-            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish)
+            annotate_with = font[digit_names[copy_i]] if debug_annotate else None
+            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish, annotate_with)
 
     if squish_all and squish != 1.0:
         for digit in digit_names:
@@ -212,7 +231,7 @@ def patch_fonts(target_files, *args):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas, args.debug_annotate)
 
 
 raise SystemExit(main(sys.argv[1:]))
