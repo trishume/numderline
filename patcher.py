@@ -28,6 +28,9 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     )
     parser.add_argument('target_fonts', help='font files to patch', metavar='font',
                         nargs='+', type=argparse.FileType('rb'))
+    parser.add_argument('--group',
+                        help='group squished digits in threes, shorthand for --no-underline --shift-amount 100 --squish 0.85 --squish-all',
+                        default=False, action='store_true')
     parser.add_argument('--no-rename',
                         help='don\'t add " with Numderline" to the font name',
                         default=True, action='store_false', dest='rename_font')
@@ -148,8 +151,14 @@ def annotate_glyph(glyph, extra_glyph):
     layer.transform(mat)
     glyph.layers[1] += layer
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals, group):
     font.encoding = 'ISO10646'
+
+    if group:
+        add_underlines = False
+        shift_amount = 100
+        squish = 0.85
+        squish_all = True
 
     mod_name = 'N'
     if add_commas:
@@ -257,7 +266,8 @@ def patch_fonts(target_files, *args):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all,
+        args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals, args.group)
 
 
 raise SystemExit(main(sys.argv[1:]))
