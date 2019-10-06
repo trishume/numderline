@@ -34,6 +34,9 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     parser.add_argument('--no-underline',
                         help='don\'t add underlines',
                         default=True, action='store_false', dest='add_underlines')
+    parser.add_argument('--no-decimals',
+                        help='don\'t touch digits after the decimal point',
+                        default=True, action='store_false', dest='do_decimals')
     parser.add_argument('--add-commas',
                         help='add commas',
                         default=False, action='store_true')
@@ -54,7 +57,25 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
 FONT_NAME_RE = re.compile(r'^([^-]*)(?:(-.*))?$')
 NUM_DIGIT_COPIES = 7
 
-def gen_feature(digit_names, underscore_name, dot_name):
+def gen_feature(digit_names, underscore_name, dot_name, do_decimals):
+    if do_decimals:
+        decimal_sub = """
+    sub {dot_name} @digits' by @nd2;
+    sub @nd2 @digits' by @nd1;
+    sub @nd1 @digits' by @nd6;
+    sub @nd6 @digits' by @nd5;
+    sub @nd5 @digits' by @nd4;
+    sub @nd4 @digits' by @nd3;
+    sub @nd3 @digits' by @nd2;
+"""
+    else:
+        decimal_sub = """
+    ignore sub {dot_name} @digits';
+    sub @digits @digits' by @digits;
+"""
+
+    decimal_sub = decimal_sub.format(dot_name=dot_name)
+
     feature = """
 languagesystem DFLT dflt;
 languagesystem latn dflt;
@@ -65,8 +86,7 @@ languagesystem kana dflt;
 {nds}
 
 feature calt {{
-    ignore sub {dot_name} @digits';
-    sub @digits @digits' by @digits;
+    {decimal_sub}
 
     sub @digits' @digits @digits @digits by @nd0;
     sub @nd0 @digits' by @nd0;
@@ -85,7 +105,7 @@ feature calt {{
     nds = ['@nd{}=[{}];'.format(i,nds[i]) for i in range(NUM_DIGIT_COPIES)]
     nds = "\n".join(nds)
     feature = feature.format(digit_names=' '.join(digit_names),
-        nds=nds, underscore_name=underscore_name, dot_name=dot_name)
+        nds=nds, underscore_name=underscore_name, decimal_sub=decimal_sub)
     with open('mods.fea', 'w') as f:
         f.write(feature)
 
@@ -128,7 +148,7 @@ def annotate_glyph(glyph, extra_glyph):
     layer.transform(mat)
     glyph.layers[1] += layer
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals):
     font.encoding = 'ISO10646'
 
     mod_name = 'N'
@@ -139,15 +159,21 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
             mod_name += 'ommas'
     if add_underlines:
         mod_name += 'umderline'
-    if shift_amount != 0:
-        mod_name += 'Shift{}'.format(shift_amount)
-    if squish != 1.0:
-        squish_s = '{}'.format(squish)
-        mod_name += 'Squish{}'.format(squish_s.replace('.','p'))
-        if squish_all:
-            mod_name += 'All'
+    # Cleaner name for what I expect to be a common combination
+    if shift_amount == 100 and squish == 0.85 and squish_all:
+        mod_name += 'Group'
+    else:
+        if shift_amount != 0:
+            mod_name += 'Shift{}'.format(shift_amount)
+        if squish != 1.0:
+            squish_s = '{}'.format(squish)
+            mod_name += 'Squish{}'.format(squish_s.replace('.','p'))
+            if squish_all:
+                mod_name += 'All'
     if debug_annotate:
         mod_name += 'Debug'
+    if not do_decimals:
+        mod_name += 'NoDecimals'
 
     # Rename font
     if rename_font:
@@ -211,7 +237,7 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
             glyph = font[digit]
             glyph.layers[1] = squish_layer(glyph.layers[1], squish)
 
-    gen_feature(digit_names, underscore_name, dot_name)
+    gen_feature(digit_names, underscore_name, dot_name, do_decimals)
 
     font.generate('out/tmp.ttf')
     ft_font = TTFont('out/tmp.ttf')
@@ -231,7 +257,7 @@ def patch_fonts(target_files, *args):
 
 def main(argv):
     args = get_argparser().parse_args(argv)
-    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas, args.debug_annotate)
+    return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all, args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals)
 
 
 raise SystemExit(main(sys.argv[1:]))
