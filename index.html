@@ -1,0 +1,403 @@
+<html>
+  <head>
+    <title>Numderline Test</title>
+    <style type="text/css">
+      
+      
+      
+      
+      @font-face {
+        font-family: "DejaVu Sans Mono with Numderline";
+        src: url("fonts/DejaVu Sans Mono with Numderline.woff2");
+      }
+      .numderline-font-1 {
+        font-family: "DejaVu Sans Mono with Numderline";
+      }
+      
+      
+      @font-face {
+        font-family: "Ubuntu Mono with Numderline";
+        src: url("fonts/Ubuntu Mono with Numderline.woff2");
+      }
+      .numderline-font-2 {
+        font-family: "Ubuntu Mono with Numderline";
+      }
+      
+      
+      @font-face {
+        font-family: "Sauce Code Pro with Numderline";
+        src: url("fonts/Sauce Code Pro with Numderline.woff2");
+      }
+      .numderline-font-3 {
+        font-family: "Sauce Code Pro with Numderline";
+      }
+      
+      
+      
+      
+      
+      @font-face {
+        font-family: "DejaVu Sans Mono with NGroup";
+        src: url("fonts/DejaVu Sans Mono with NGroup.woff2");
+      }
+      .ngroup-font-1 {
+        font-family: "DejaVu Sans Mono with NGroup";
+      }
+      
+      
+      @font-face {
+        font-family: "Ubuntu Mono with NGroup";
+        src: url("fonts/Ubuntu Mono with NGroup.woff2");
+      }
+      .ngroup-font-2 {
+        font-family: "Ubuntu Mono with NGroup";
+      }
+      
+      
+      @font-face {
+        font-family: "Hack Regular with NGroup";
+        src: url("fonts/Hack Regular with NGroup.woff2");
+      }
+      .ngroup-font-3 {
+        font-family: "Hack Regular with NGroup";
+      }
+      
+      
+      @font-face {
+        font-family: "Sauce Code Pro with NGroup";
+        src: url("fonts/Sauce Code Pro with NGroup.woff2");
+      }
+      .ngroup-font-4 {
+        font-family: "Sauce Code Pro with NGroup";
+      }
+      
+      
+      
+      
+      
+      @font-face {
+        font-family: "Sauce Code Pro with NSub";
+        src: url("fonts/Sauce Code Pro with NSub.woff2");
+      }
+      .nbold-font-1 {
+        font-family: "Sauce Code Pro with NSub";
+      }
+      
+      
+      
+      
+      
+      @font-face {
+        font-family: "DejaVu Sans with NommasNoDecimals";
+        src: url("fonts/DejaVu Sans with NommasNoDecimals.woff2");
+      }
+      .nommas-font-1 {
+        font-family: "DejaVu Sans with NommasNoDecimals";
+      }
+      
+      
+      
+      
+      
+      @font-face {
+        font-family: "DejaVu Sans Mono with NonoCommasGroupNoDecimals";
+        src: url("fonts/DejaVu Sans Mono with NonoCommasGroupNoDecimals.woff2");
+      }
+      .monocommas-font-1 {
+        font-family: "DejaVu Sans Mono with NonoCommasGroupNoDecimals";
+      }
+      
+      
+      @font-face {
+        font-family: "Ubuntu Mono with NonoCommasGroupNoDecimals";
+        src: url("fonts/Ubuntu Mono with NonoCommasGroupNoDecimals.woff2");
+      }
+      .monocommas-font-2 {
+        font-family: "Ubuntu Mono with NonoCommasGroupNoDecimals";
+      }
+      
+      
+      @font-face {
+        font-family: "Hack Regular with NonoCommasGroupNoDecimals";
+        src: url("fonts/Hack Regular with NonoCommasGroupNoDecimals.woff2");
+      }
+      .monocommas-font-3 {
+        font-family: "Hack Regular with NonoCommasGroupNoDecimals";
+      }
+      
+      
+      @font-face {
+        font-family: "Sauce Code Pro with NonoCommasGroupNoDecimals";
+        src: url("fonts/Sauce Code Pro with NonoCommasGroupNoDecimals.woff2");
+      }
+      .monocommas-font-4 {
+        font-family: "Sauce Code Pro with NonoCommasGroupNoDecimals";
+      }
+      
+      
+      
+      
+      
+      @font-face {
+        font-family: "DejaVu Sans Mono with NDebug";
+        src: url("fonts/DejaVu Sans Mono with NDebug.woff2");
+      }
+      .debug-font-1 {
+        font-family: "DejaVu Sans Mono with NDebug";
+      }
+      
+      
+    </style>
+    <style type="text/css">
+        body {
+            margin: 40px;
+            max-width: 900px;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #444;
+            padding: 0 10px;
+            /*font-family: DejaVu Sans with NommasNoDecimals, Arial;*/
+            font-family: Arial;
+
+/*            background-color: #fdf6e3;
+            color: #586e75;
+*/
+        }
+
+        h1,
+        h2,
+        h3 {
+            line-height: 1.2;
+        }
+
+        h4 {
+          margin-top: -20px;
+        }
+
+        textarea {
+          font-size: 12pt;
+          width: 1000px;
+          height: 200px;
+          border: none;
+          outline: none;
+
+          white-space: pre;
+          overflow-wrap: normal;
+          overflow: auto;
+
+/*          background-color: #002b36;
+          color: #839496;
+*/
+          padding: 10px;
+        }
+
+        .short-textarea {
+          height: 70px;
+        }
+
+/*        .demo {
+          width: 100%;
+          background-color: #002b36;
+        }
+*/
+
+        .font-button {
+          background-color: #EEE;
+          color: #444;
+          text-decoration: none;
+          padding: 5px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        .font-button:hover {
+          background-color: #AAA;
+        }
+
+        @media only screen and (max-width: 1000px) {
+          textarea {
+            font-size: 10pt !important;
+          }
+        }
+    </style>
+    <script type="text/javascript">
+      function switchFont(id, face) {
+        document.getElementById(id).style.fontFamily = face;
+      }
+    </script>
+  </head>
+  <body>
+    <h1>N<u>umder</u>line</h1>
+    <!-- <h4>By <a href="http://thume.ca/">Tristan Hume</a></h4> -->
+    <p>
+      Numderline is a font patcher that uses font shaping trickery to make it easier to visually parse large numbers displayed with the font in a variety of ways.
+    </p>
+    <p>
+      I (<a href="http://thume.ca/">Tristan Hume</a>) was inspired to build this by my job at <a href="http://janestreet.com/">Jane Street</a> involving staring at a lot of large numbers, mostly latencies in nanoseconds, and wanting to pick out larger quantities like milliseconds and microseconds.
+    </p>
+    <p>
+      See <a href="https://github.com/trishume/numderline">the code on Github</a> to contribute or patch fonts of your choice.
+    </p>
+    
+    <h2>Underlining</h2>
+    <p>The flagship "Numderline" variant underlines alternating groups of 3 digits.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="numderline-demo" class="numderline-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/DejaVuSansMono-numderline.zip" onmouseover="switchFont('numderline-demo', 'DejaVu Sans Mono with Numderline')">DejaVuSansMono</a>
+      
+      <a class="font-button" href="downloads/UbuntuMono-numderline.zip" onmouseover="switchFont('numderline-demo', 'Ubuntu Mono with Numderline')">UbuntuMono</a>
+      
+      <a class="font-button" href="downloads/SauceCode-numderline.zip" onmouseover="switchFont('numderline-demo', 'Sauce Code Pro with Numderline')">SauceCode</a>
+      
+    </span>
+    
+    <h2>Grouping</h2>
+    <p>Squishes digits together into groups of 3. Nice looking and works for most fonts but annoying for editable text since it jumps around while typing.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="ngroup-demo" class="ngroup-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/DejaVuSansMono-ngroup.zip" onmouseover="switchFont('ngroup-demo', 'DejaVu Sans Mono with NGroup')">DejaVuSansMono</a>
+      
+      <a class="font-button" href="downloads/UbuntuMono-ngroup.zip" onmouseover="switchFont('ngroup-demo', 'Ubuntu Mono with NGroup')">UbuntuMono</a>
+      
+      <a class="font-button" href="downloads/Hack-ngroup.zip" onmouseover="switchFont('ngroup-demo', 'Hack Regular with NGroup')">Hack</a>
+      
+      <a class="font-button" href="downloads/SauceCode-ngroup.zip" onmouseover="switchFont('ngroup-demo', 'Sauce Code Pro with NGroup')">SauceCode</a>
+      
+    </span>
+    
+    <h2>Bolding</h2>
+    <p>For fonts with lots of weights, we can make alternating groups slightly bolder.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="nbold-demo" class="nbold-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/SauceCode-nbold.zip" onmouseover="switchFont('nbold-demo', 'Sauce Code Pro with NSub')">SauceCode</a>
+      
+    </span>
+    
+    <h2>Commas</h2>
+    <p>Inserting fake commas is a good option in proportional contexts where changing the width doesn't matter.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="nommas-demo" class="nommas-font-1 short-textarea">
+the quick brown fox jumps over the lazy dog
+Revenue was up to $123456789.00 after adjusting factor #1234 to 1234.1234512</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/DejaVuSans-nommas.zip" onmouseover="switchFont('nommas-demo', 'DejaVu Sans with NommasNoDecimals')">DejaVuSans</a>
+      
+    </span>
+    
+    <h2>Monospace Commas</h2>
+    <p>Using the grouping method we can make space to insert commas even in monospace fonts.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="monocommas-demo" class="monocommas-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/DejaVuSansMono-monocommas.zip" onmouseover="switchFont('monocommas-demo', 'DejaVu Sans Mono with NonoCommasGroupNoDecimals')">DejaVuSansMono</a>
+      
+      <a class="font-button" href="downloads/UbuntuMono-monocommas.zip" onmouseover="switchFont('monocommas-demo', 'Ubuntu Mono with NonoCommasGroupNoDecimals')">UbuntuMono</a>
+      
+      <a class="font-button" href="downloads/Hack-monocommas.zip" onmouseover="switchFont('monocommas-demo', 'Hack Regular with NonoCommasGroupNoDecimals')">Hack</a>
+      
+      <a class="font-button" href="downloads/SauceCode-monocommas.zip" onmouseover="switchFont('monocommas-demo', 'Sauce Code Pro with NonoCommasGroupNoDecimals')">SauceCode</a>
+      
+    </span>
+    
+    <h2>Debug</h2>
+    <p>The debug version shows how the font works, by using shaping tricks to replace digits with alternate versions that track the position modulo 7.</p>
+    <div class="demo">
+    
+    <textarea spellcheck="false" id="debug-demo" class="debug-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      
+      
+      <a class="font-button" href="downloads/DejaVuSansMono-debug.zip" onmouseover="switchFont('debug-demo', 'DejaVu Sans Mono with NDebug')">DejaVuSansMono</a>
+      
+    </span>
+    
+    <h2>Notes</h2>
+    <ul>
+      <li> The flagship underlining variant is my favorite, but it only works on fonts with a sufficiently wide, low and thin underscore like DejaVu Sans Mono. This could be fixed by synthesizing an underline contour for a font instead of using the underscore character, contributions welcome!
+      <li> "SauceCode" variants are based on the <a href="https://github.com/adobe-fonts/source-code-pro">Source Code Pro</a> font, but the SIL Open Font License prohibits derived fonts from using the same name.
+      <li> Unfortunately I couldn't get patching of fonts with existing ligatures to preserve the original ligatures, although it's probably possible with some debugging of arcane font stuff.
+      <li> All data in the example table is based on a random generation script, not any real data.
+    </ul>
+  </body>
+</html>
