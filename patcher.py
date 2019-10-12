@@ -48,6 +48,7 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
     parser.add_argument('--squish-all',
                         help='squish all numbers, including decimals and ones less than 4 digits, use with --squish flag',
                         default=False, action='store_true')
+    parser.add_argument('--sub-font', help='substitute alternating groups of 3 with this font', type=argparse.FileType('rb'))
     parser.add_argument('--spaceless-commas',
                         help='manipulate commas to not change the spacing, for monospace fonts, use with --add-commas',
                         default=False, action='store_true')
@@ -151,7 +152,7 @@ def annotate_glyph(glyph, extra_glyph):
     layer.transform(mat)
     glyph.layers[1] += layer
 
-def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals, group):
+def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals, group, sub_font):
     font.encoding = 'ISO10646'
 
     if group:
@@ -168,6 +169,8 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
             mod_name += 'ommas'
     if add_underlines:
         mod_name += 'umderline'
+    if sub_font is not None:
+        mod_name += 'Sub'
     # Cleaner name for what I expect to be a common combination
     if shift_amount == 100 and squish == 0.85 and squish_all:
         mod_name += 'Group'
@@ -201,7 +204,10 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
     test_names = [font[code].glyphname for code in range(ord('A'),ord('J')+1)]
     underscore_name = font[ord('_')].glyphname
     dot_name = font[ord('.')].glyphname
-    print(digit_names)
+    # print(digit_names)
+
+    if sub_font is not None:
+        sub_font = fontforge.open(sub_font.name)
 
     underscore_layer = font[underscore_name].layers[1]
 
@@ -209,10 +215,10 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
     # popular uses. I checked the Apple glyph browser and Nerd Font.
     # Uses an array because of python closure capture semantics
     encoding_alloc = [0xE900]
-    def make_copy(loc, to_name, add_underscore, add_comma, shift, squish, annotate_with):
+    def make_copy(src_font, loc, to_name, add_underscore, add_comma, shift, squish, annotate_with):
         encoding = encoding_alloc[0]
-        font.selection.select(loc)
-        font.copy()
+        src_font.selection.select(loc)
+        src_font.copy()
         font.selection.select(encoding)
         font.paste()
         glyph = font[encoding]
@@ -236,10 +242,13 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
                 shift = -shift_amount
             elif copy_i % 3 == 2:
                 shift = shift_amount
-            add_underscore = add_underlines and (copy_i >= 3 and copy_i < 6)
+            in_alternating_group = (copy_i >= 3 and copy_i < 6)
+            add_underscore = add_underlines and in_alternating_group
             add_comma = add_commas and (copy_i == 3 or copy_i == 6)
             annotate_with = font[digit_names[copy_i]] if debug_annotate else None
-            make_copy(digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish, annotate_with)
+            use_sub_font = (sub_font is not None) and in_alternating_group
+            src_font = sub_font if use_sub_font else font
+            make_copy(src_font, digit_names[digit_i], 'nd{}.{}'.format(copy_i,digit_i), add_underscore, add_comma, shift, squish, annotate_with)
 
     if squish_all and squish != 1.0:
         for digit in digit_names:
@@ -251,7 +260,10 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
     font.generate('out/tmp.ttf')
     ft_font = TTFont('out/tmp.ttf')
     addOpenTypeFeatures(ft_font, 'mods.fea', tables=['GSUB'])
-    ft_font.save('out/{0}.ttf'.format(font.fullname))
+    # replacement to comply with SIL Open Font License
+    out_name = font.fullname.replace('Source ', 'Sauce ')
+    ft_font.save('out/{0}.ttf'.format(out_name))
+    print("Created '{}'".format(out_name))
 
 
 def patch_fonts(target_files, *args):
@@ -267,7 +279,7 @@ def patch_fonts(target_files, *args):
 def main(argv):
     args = get_argparser().parse_args(argv)
     return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all,
-        args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals, args.group)
+        args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals, args.group, args.sub_font)
 
 
 raise SystemExit(main(sys.argv[1:]))
