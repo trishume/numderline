@@ -4,3 +4,7 @@ out/*.zip
 out/*.woff2
 mods.fea
 fonts/*
+
+site/fonts/*.woff2
+site/downloads/*.zip
+site/_data/manifest.json

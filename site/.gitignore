@@ -3,7 +3,3 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
-
-fonts/*.woff2
-downloads/*.zip
-_data/manifest.json
