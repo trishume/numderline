@@ -1,0 +1,18 @@
+- title: Underlining
+  set_name: numderline
+  desc: The flagship "Numderline" variant underlines alternating groups of 3 digits.
+- title: Grouping
+  set_name: ngroup
+  desc: Squishes digits together into groups of 3. Nice looking and works for most fonts but annoying for editable text since it jumps around while typing.
+- title: Bolding
+  set_name: nbold
+  desc: For fonts with lots of weights, we can make alternating groups slightly bolder.
+- title: Commas
+  set_name: nommas
+  desc: Inserting fake commas is a good option in proportional contexts where changing the width doesn't matter.
+- title: Monospace Commas
+  set_name: monocommas
+  desc: Using the grouping method we can make space to insert commas even in monospace fonts.
+- title: Debug
+  set_name: debug
+  desc: The debug version shows how the font works, by using shaping tricks to replace digits with alternate versions that track the position modulo 7.

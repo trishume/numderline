@@ -4,9 +4,14 @@
 import argparse
 import sys
 import re
+import subprocess
 import os.path
+import json
+import shutil
+import zipfile
 
 from itertools import chain
+from collections import defaultdict
 
 try:
     import fontforge
@@ -27,7 +32,7 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
                      'Stores the patched font as a new, renamed font file by default.')
     )
     parser.add_argument('target_fonts', help='font files to patch', metavar='font',
-                        nargs='+', type=argparse.FileType('rb'))
+                        nargs='*', type=argparse.FileType('rb'))
     parser.add_argument('--group',
                         help='group squished digits in threes, shorthand for --no-underline --shift-amount 100 --squish 0.85 --squish-all',
                         default=False, action='store_true')
@@ -54,6 +59,9 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
                         default=False, action='store_true')
     parser.add_argument('--debug-annotate',
                         help='annotate glyph copies with debug digits',
+                        default=False, action='store_true')
+    parser.add_argument('--build-release',
+                        help='build the default release of Numderline',
                         default=False, action='store_true')
     return parser
 
@@ -151,6 +159,9 @@ def annotate_glyph(glyph, extra_glyph):
     mat = psMat.translate(0, -600)
     layer.transform(mat)
     glyph.layers[1] += layer
+
+def out_path(name):
+    return 'out/{0}.ttf'.format(name)
 
 def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squish_all, add_commas, spaceless_commas, debug_annotate, do_decimals, group, sub_font):
     font.encoding = 'ISO10646'
@@ -262,24 +273,104 @@ def patch_one_font(font, rename_font, add_underlines, shift_amount, squish, squi
     addOpenTypeFeatures(ft_font, 'mods.fea', tables=['GSUB'])
     # replacement to comply with SIL Open Font License
     out_name = font.fullname.replace('Source ', 'Sauce ')
-    ft_font.save('out/{0}.ttf'.format(out_name))
-    print("Created '{}'".format(out_name))
+    ft_font.save(out_path(out_name))
+    print("> Created '{}'".format(out_name))
+
+    if sub_font is not None:
+        sub_font.close()
+
+    return out_name
 
 
 def patch_fonts(target_files, *args):
+    res = None
     for target_file in target_files:
         target_font = fontforge.open(target_file.name)
         try:
-            patch_one_font(target_font, *args)
+            res = patch_one_font(target_font, *args)
         finally:
             target_font.close()
-    return 0
+    return res
+
+def source_font_path(weight, is_italic):
+    suffix = weight
+    if is_italic and weight == 'Regular':
+        suffix = ''
+    if is_italic:
+        suffix += 'It'
+    return "fonts/source-code-pro/SourceCodePro-{}.ttf".format(suffix)
+
+def build_release():
+    infos = {
+        'DejaVuSansMono' : {'prefix': 'fonts/dejavu/DejaVuSansMono', 'suffixes': ['', '-Bold', '-Oblique', '-BoldOblique']},
+        'DejaVuSans' : {'prefix': 'fonts/dejavu/DejaVuSans', 'suffixes': ['', '-Bold', '-Oblique', '-BoldOblique']},
+        'UbuntuMono' : {'prefix': 'fonts/ubuntu/UbuntuMono', 'suffixes': ['-R', '-B', '-RI', '-BI']},
+        'Hack' : {'prefix': 'fonts/hack/Hack', 'suffixes': ['-Regular', '-Bold', '-Italic', '-BoldItalic']},
+        'SauceCode' : {'prefix': 'fonts/source-code-pro/SourceCodePro', 'suffixes': ['-Regular', '-Light', '-Bold', '-It', '-BoldIt']},
+    }
+
+    to_build = [
+        ('debug', 'DejaVuSansMono', ['fonts/dejavu/DejaVuSansMono.ttf', '--no-underline', '--debug-annotate'])
+        # ['fonts/source-code-pro/SourceCodePro-Light.ttf', '--no-underline', '--sub-font', 'fonts/source-code-pro/SourceCodePro-Regular.ttf']
+    ]
+
+    def for_all_weights(name, set_name, opts):
+        info = infos[name]
+        for suffix in info['suffixes']:
+            to_build.append((set_name, name, ['{}{}.ttf'.format(info['prefix'], suffix)]+opts))
+
+    for name in ['DejaVuSansMono', 'UbuntuMono']:
+        for_all_weights(name, 'numderline', [])
+
+    for_all_weights('DejaVuSans', 'nommas', ['--no-underline', '--add-commas', '--no-decimals'])
+
+    all_monospace = ['DejaVuSansMono', 'UbuntuMono', 'Hack', 'SauceCode']
+    for name in all_monospace:
+        for_all_weights(name, 'ngroup', ['--no-underline', '--group'])
+    for name in all_monospace:
+        for_all_weights(name, 'monocommas', ['--no-underline', '--group', '--add-commas', '--spaceless-commas', '--no-decimals'])
+
+    source_sub_series = ['Regular', 'Semibold', 'Bold', 'Black']
+    for i, weight in enumerate(source_sub_series[:-1]):
+        for it in [False, True]:
+            bolder = source_sub_series[i+1]
+            to_build.append(('nbold','SauceCode',[source_font_path(weight, it), '--no-underline', '--sub-font', source_font_path(bolder, it)]))
+
+
+    manifest = defaultdict(lambda: defaultdict(lambda: []))
+    for set_name, font_id, args in to_build:
+        out_name = main(args)
+        if out_name is None:
+            raise Exception("Build failed")
+        manifest[set_name][font_id].append(out_name)
+
+    print(manifest)
+
+    for variant, fonts in manifest.items():
+        for font, weights in fonts.items():
+            archive_name = "{}-{}".format(font, variant)
+            with zipfile.ZipFile("site/downloads/{}.zip".format(archive_name), 'w', compression=zipfile.ZIP_DEFLATED) as myzip:
+                for weight in weights:
+                    myzip.write(out_path(weight), '{}/{}.ttf'.format(archive_name, weight))
+
+    with open('site/_data/manifest.json','w') as f:
+        f.write(json.dumps(manifest))
+
+    for fonts in manifest.values():
+        for weights in fonts.values():
+            subprocess.run(['woff2_compress',out_path(weights[0])])
+            shutil.copyfile("out/{}.woff2".format(weights[0]), "site/fonts/{}.woff2".format(weights[0]))
 
 
 def main(argv):
     args = get_argparser().parse_args(argv)
+
+    if args.build_release:
+        build_release()
+        return
+
     return patch_fonts(args.target_fonts, args.rename_font, args.add_underlines, args.shift_amount, args.squish, args.squish_all,
         args.add_commas, args.spaceless_commas, args.debug_annotate, args.do_decimals, args.group, args.sub_font)
 
 
-raise SystemExit(main(sys.argv[1:]))
+main(sys.argv[1:])

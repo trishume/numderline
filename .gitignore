@@ -1,5 +1,6 @@
 out/*.otf
 out/*.ttf
 out/*.zip
+out/*.woff2
 mods.fea
 fonts/*

@@ -1,0 +1,148 @@
+---
+---
+<html>
+  <head>
+    <title>Numderline Test</title>
+    <style type="text/css">
+      {% for version in site.data.versions %}
+      {% assign faces = site.data.manifest[version.set_name] %}
+      {% for face in faces %}
+      {% assign main_weight = face[1][0] %}
+      @font-face {
+        font-family: "{{main_weight}}";
+        src: url("fonts/{{main_weight}}.woff2");
+      }
+      .{{version.set_name}}-font-{{forloop.index}} {
+        font-family: "{{main_weight}}";
+      }
+      {% endfor %}
+      {% endfor %}
+    </style>
+    <style type="text/css">
+        body {
+            margin: 40px;
+            max-width: 900px;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #444;
+            padding: 0 10px;
+            /*font-family: DejaVu Sans with NommasNoDecimals, Arial;*/
+            font-family: Arial;
+
+/*            background-color: #fdf6e3;
+            color: #586e75;
+*/
+        }
+
+        h1,
+        h2,
+        h3 {
+            line-height: 1.2;
+        }
+
+        h4 {
+          margin-top: -20px;
+        }
+
+        textarea {
+          font-size: 12pt;
+          width: 1000px;
+          height: 200px;
+          border: none;
+          outline: none;
+
+          white-space: pre;
+          overflow-wrap: normal;
+          overflow: auto;
+
+/*          background-color: #002b36;
+          color: #839496;
+*/
+          padding: 10px;
+        }
+
+        .short-textarea {
+          height: 70px;
+        }
+
+/*        .demo {
+          width: 100%;
+          background-color: #002b36;
+        }
+*/
+
+        .font-button {
+          background-color: #EEE;
+          color: #444;
+          text-decoration: none;
+          padding: 5px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        .font-button:hover {
+          background-color: #AAA;
+        }
+
+        @media only screen and (max-width: 1000px) {
+          textarea {
+            font-size: 10pt !important;
+          }
+        }
+    </style>
+    <script type="text/javascript">
+      function switchFont(id, face) {
+        document.getElementById(id).style.fontFamily = face;
+      }
+    </script>
+  </head>
+  <body>
+    <h1>N<u>umder</u>line</h1>
+    <!-- <h4>By <a href="http://thume.ca/">Tristan Hume</a></h4> -->
+    <p>
+      Numderline is a font patcher that uses font shaping trickery to make it easier to visually parse large numbers displayed with the font in a variety of ways.
+    </p>
+    <p>
+      I (<a href="http://thume.ca/">Tristan Hume</a>) was inspired to build this by my job at <a href="http://janestreet.com/">Jane Street</a> involving staring at a lot of large numbers, mostly latencies in nanoseconds, and wanting to pick out larger quantities like milliseconds and microseconds.
+    </p>
+    <p>
+      See <a href="https://github.com/trishume/numderline">the code on Github</a> to contribute or patch fonts of your choice.
+    </p>
+    {% for version in site.data.versions %}
+    <h2>{{ version.title }}</h2>
+    <p>{{ version.desc }}</p>
+    <div class="demo">
+    {% if version.set_name == 'nommas' %}
+    <textarea spellcheck="false" id="{{version.set_name}}-demo" class="{{version.set_name}}-font-1 short-textarea">
+the quick brown fox jumps over the lazy dog
+Revenue was up to $123456789.00 after adjusting factor #1234 to 1234.1234512</textarea>
+    {% else %}
+    <textarea spellcheck="false" id="{{version.set_name}}-demo" class="{{version.set_name}}-font-1">
+the quick brown fox jumps over the lazy dog
+test_var += 12345678901234567890.12345678901234567890 - 42
+
+time                       flow_type   latency_ns  epoch             ack_latency_ns  transit_delay_ns
+-------------------------  ----------  ----------  ----------------  --------------  ----------------
+2019-10-02 22:11:59 -0400  Order            31439  1570068719.15762          814364        9045303407
+2019-10-02 22:11:59 -0400  Cancel           65354  1570068719.15764             851       18572002092
+2019-10-02 22:11:59 -0400  Cancel           74405  1570068719.15765            8488         208969225
+2019-10-02 22:11:59 -0400  Cancel            5279  1570068719.15767           23318        5853333820</textarea>
+    {% endif %}
+    </div>
+    <span>
+      <strong>Download (hover to preview):</strong>
+      {% assign faces = site.data.manifest[version.set_name] %}
+      {% for face in faces %}
+      <a class="font-button" href="downloads/{{face[0]}}-{{version.set_name}}.zip" onmouseover="switchFont('{{version.set_name}}-demo', '{{face[1][0]}}')">{{face[0]}}</a>
+      {% endfor %}
+    </span>
+    {% endfor %}
+    <h2>Notes</h2>
+    <ul>
+      <li> The flagship underlining variant is my favorite, but it only works on fonts with a sufficiently wide, low and thin underscore like DejaVu Sans Mono. This could be fixed by synthesizing an underline contour for a font instead of using the underscore character, contributions welcome!
+      <li> "SauceCode" variants are based on the <a href="https://github.com/adobe-fonts/source-code-pro">Source Code Pro</a> font, but the SIL Open Font License prohibits derived fonts from using the same name.
+      <li> Unfortunately I couldn't get patching of fonts with existing ligatures to preserve the original ligatures, although it's probably possible with some debugging of arcane font stuff.
+      <li> All data in the example table is based on a random generation script, not any real data.
+    </ul>
+  </body>
+</html>
