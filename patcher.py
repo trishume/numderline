@@ -319,7 +319,7 @@ def build_release():
         for suffix in info['suffixes']:
             to_build.append((set_name, name, ['{}{}.ttf'.format(info['prefix'], suffix)]+opts))
 
-    for name in ['DejaVuSansMono', 'UbuntuMono']:
+    for name in ['DejaVuSansMono', 'UbuntuMono', 'SauceCode']:
         for_all_weights(name, 'numderline', [])
 
     for_all_weights('DejaVuSans', 'nommas', ['--no-underline', '--add-commas', '--no-decimals'])

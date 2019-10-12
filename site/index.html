@@ -100,7 +100,7 @@
     <h1>N<u>umder</u>line</h1>
     <!-- <h4>By <a href="http://thume.ca/">Tristan Hume</a></h4> -->
     <p>
-      Numderline is a font patcher that uses font shaping trickery to make it easier to visually parse large numbers displayed with the font in a variety of ways.
+      Numderline is a font patcher that uses OpenType font shaping trickery to make it easier to visually parse large numbers. It has multiple variants for different preferences, fonts and contexts.
     </p>
     <p>
       I (<a href="http://thume.ca/">Tristan Hume</a>) was inspired to build this by my job at <a href="http://janestreet.com/">Jane Street</a> involving staring at a lot of large numbers, mostly latencies in nanoseconds, and wanting to pick out larger quantities like milliseconds and microseconds.
@@ -139,6 +139,7 @@ time                       flow_type   latency_ns  epoch             ack_latency
     {% endfor %}
     <h2>Notes</h2>
     <ul>
+      <li> These fonts only work in applications with proper font shaping support. This includes browsers, many native apps and <a href="https://sw.kovidgoyal.net/kitty/">the Kitty terminal</a>. Unfortunately some apps that support basic ligatures don't support the fancy shaping features I use, including Sublime Text 3 and iTerm2. Other apps like Emacs and most terminals don't support shaping at all.
       <li> The flagship underlining variant is my favorite, but it only works on fonts with a sufficiently wide, low and thin underscore like DejaVu Sans Mono. This could be fixed by synthesizing an underline contour for a font instead of using the underscore character, contributions welcome!
       <li> "SauceCode" variants are based on the <a href="https://github.com/adobe-fonts/source-code-pro">Source Code Pro</a> font, but the SIL Open Font License prohibits derived fonts from using the same name.
       <li> Unfortunately I couldn't get patching of fonts with existing ligatures to preserve the original ligatures, although it's probably possible with some debugging of arcane font stuff.
