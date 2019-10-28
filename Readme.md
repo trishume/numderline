@@ -16,8 +16,8 @@ A blog post about this and a web page to see and download pre-patched fonts shou
 ### Usage
 
 1. Clone the repo
-1. Install the FontForge Python API, on macOS I used Homebrew to do this with `brew install fontforge`
-1. Install the fonttools API, I used `pip3 install fonttools` to install it in my Homebrew python3
+1. Install the FontForge Python API, on macOS I used Homebrew to do this with `brew install fontforge`, or you can use `brew bundle`
+1. Install the fonttools API, I used `pip3 install fonttools` to install it in my Homebrew python3, or you can use `pip3 install -r requirements.txt`
 1. Run `python3 patcher.py FONT_FILE_TO_PATCH` and look in the `out` folder
 
 You can also run `python3 patcher.py --help` and read the source to see other options.
