@@ -72,6 +72,7 @@ NUM_DIGIT_COPIES = 7
 def gen_feature(digit_names, underscore_name, dot_name, do_decimals):
     if do_decimals:
         decimal_sub = """
+    ignore sub {dot_name} {dot_name} @digits';
     sub {dot_name} @digits' by @nd2;
     sub @nd2 @digits' by @nd1;
     sub @nd1 @digits' by @nd6;
